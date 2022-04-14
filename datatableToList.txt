@@ -1,0 +1,178 @@
+    public static class DataTableToList
+    {
+        public static List<T> ToList<T>(this DataTable dataTable) where T : new()
+        {
+            var dataList = new List<T>();
+
+            //Define what attributes to be read from the class
+            const BindingFlags flags = BindingFlags.Public | BindingFlags.Instance;
+
+            //Read Attribute Names and Types
+            var objFieldNames = typeof(T).GetProperties(flags).Cast<PropertyInfo>().
+                Select(item => new
+                {
+                    Name = item.Name,
+                    Type = Nullable.GetUnderlyingType(item.PropertyType) ?? item.PropertyType
+                }).ToList();
+
+            //Read Datatable column names and types
+            var dtlFieldNames = dataTable.Columns.Cast<DataColumn>().
+                Select(item => new
+                {
+                    Name = item.ColumnName,
+                    Type = item.DataType
+                }).ToList();
+
+            foreach (DataRow dataRow in dataTable.AsEnumerable().ToList())
+            {
+                var classObj = new T();
+
+                foreach (var dtField in dtlFieldNames)
+                {
+                    PropertyInfo propertyInfos = classObj.GetType().GetProperty(dtField.Name);
+
+                    var field = objFieldNames.Find(x => x.Name == dtField.Name);
+
+                    if (field != null)
+                    {
+
+                        if (propertyInfos.PropertyType == typeof(DateTime))
+                        {
+                            propertyInfos.SetValue(classObj, convertToDateTime(dataRow[dtField.Name]), null);
+                        }
+                        else if (propertyInfos.PropertyType == typeof(short))
+                        {
+                            propertyInfos.SetValue(classObj, ConvertToShort(dataRow[dtField.Name]), null);
+                        }
+                        else if (propertyInfos.PropertyType == typeof(int))
+                        {
+                            propertyInfos.SetValue(classObj, ConvertToInt(dataRow[dtField.Name]), null);
+                        }
+                        else if (propertyInfos.PropertyType == typeof(long))
+                        {
+                            propertyInfos.SetValue(classObj, ConvertToLong(dataRow[dtField.Name]), null);
+                        }
+                        else if (propertyInfos.PropertyType == typeof(decimal))
+                        {
+                            propertyInfos.SetValue(classObj, ConvertToDecimal(dataRow[dtField.Name]), null);
+                        }
+                        else if (propertyInfos.PropertyType == typeof(String))
+                        {
+                            propertyInfos.SetValue(classObj, ConvertToString(dataRow[dtField.Name]), null);
+                        }
+                        else if ((Nullable.GetUnderlyingType(propertyInfos.PropertyType) ?? propertyInfos.PropertyType) == typeof(DateTime))
+                        {
+                            propertyInfos.SetValue(classObj, convertToDateTime(dataRow[dtField.Name], true), null);
+                        }
+                        else if ((Nullable.GetUnderlyingType(propertyInfos.PropertyType) ?? propertyInfos.PropertyType) == typeof(short))
+                        {
+                            propertyInfos.SetValue(classObj, ConvertToShort(dataRow[dtField.Name], true), null);
+                        }
+                        else if ((Nullable.GetUnderlyingType(propertyInfos.PropertyType) ?? propertyInfos.PropertyType) == typeof(int))
+                        {
+                            propertyInfos.SetValue(classObj, ConvertToInt(dataRow[dtField.Name], true), null);
+                        }
+                        else if ((Nullable.GetUnderlyingType(propertyInfos.PropertyType) ?? propertyInfos.PropertyType) == typeof(long))
+                        {
+                            propertyInfos.SetValue(classObj, ConvertToLong(dataRow[dtField.Name], true), null);
+                        }
+                        else if ((Nullable.GetUnderlyingType(propertyInfos.PropertyType) ?? propertyInfos.PropertyType) == typeof(decimal))
+                        {
+                            propertyInfos.SetValue(classObj, ConvertToDecimal(dataRow[dtField.Name], true), null);
+                        }
+                        else if ((Nullable.GetUnderlyingType(propertyInfos.PropertyType) ?? propertyInfos.PropertyType) == typeof(String))
+                        {
+                            propertyInfos.SetValue(classObj, ConvertToString(dataRow[dtField.Name], true), null);
+                        }
+                    }
+                }
+                dataList.Add(classObj);
+            }
+            return dataList;
+        }
+
+        private static string ConvertToString(object value, bool nullable = false)
+        {
+            if (nullable == false && (value == null || value == DBNull.Value))
+                return string.Empty;
+            else if (nullable == true && (value == null || value == DBNull.Value))
+                return null;
+
+            return Convert.ToString(value);
+        }
+
+        private static Nullable<short> ConvertToShort(object value, bool nullable = false)
+        {
+            if (nullable == false && (value == null || value == DBNull.Value))
+                return 0;
+            else if (nullable == true && (value == null || value == DBNull.Value))
+                return null;
+
+            short retorno = 0;
+
+            if (short.TryParse(value.ToString(), out retorno) == true)
+                return retorno;
+            else
+                return 0;
+        }
+
+        private static Nullable<int> ConvertToInt(object value, bool nullable = false)
+        {
+            if (nullable == false && (value == null || value == DBNull.Value))
+                return 0;
+            else if (nullable == true && (value == null || value == DBNull.Value))
+                return null;
+
+            int retorno = 0;
+
+            if (int.TryParse(value.ToString(), out retorno) == true)
+                return retorno;
+            else
+                return 0;
+        }
+
+        private static Nullable<long> ConvertToLong(object value, bool nullable = false)
+        {
+            if (nullable == false && (value == null || value == DBNull.Value))
+                return 0;
+            else if (nullable == true && (value == null || value == DBNull.Value))
+                return null;
+
+            long retorno = 0;
+
+            if (long.TryParse(value.ToString(), out retorno) == true)
+                return retorno;
+            else
+                return 0;
+        }
+
+        private static Nullable<decimal> ConvertToDecimal(object value, bool nullable = false)
+        {
+            if (nullable == false && (value == null || value == DBNull.Value))
+                return 0;
+            else if (nullable == true && (value == null || value == DBNull.Value))
+                return null;
+
+            decimal retorno = 0;
+
+            if (decimal.TryParse(value.ToString(), out retorno) == true)
+                return retorno;
+            else
+                return 0;
+        }
+
+        private static Nullable<DateTime> convertToDateTime(object value, bool nullable = false)
+        {
+            if (nullable == false && (value == null || value == DBNull.Value))
+                return DateTimeSql.MinValue();
+            else if (nullable == true && (value == null || value == DBNull.Value))
+                return null;
+
+            DateTime retorno = new DateTime();
+
+            if (DateTime.TryParse(value.ToString(), out retorno) == true)
+                return retorno;
+            else
+                return DateTimeSql.MinValue();
+        }
+    }
